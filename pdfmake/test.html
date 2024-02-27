@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Generate PDF</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f4f4f4;
+      }
+
+      h1 {
+        color: #333;
+      }
+
+      div {
+        margin-bottom: 20px;
+      }
+
+      input {
+        padding: 10px;
+        font-size: 16px;
+      }
+
+      button {
+        padding: 10px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+      }
+
+      button:hover {
+        background-color: #45a049;
+      }
+
+      textarea {
+        padding: 10px;
+        font-size: 16px;
+      }
+
+      #pdfContent {
+        width: 100%;
+        min-height: 200px;
+        border: 1px solid #ccc;
+        padding: 10px;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        outline: none;
+        overflow-y: auto;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+      }
+
+      #pdfContent:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+      }
+    </style>
+    <script type="module"></script>
+  </head>
+
+  <body>
+    <h1>Generate PDF</h1>
+    <h2>从URL下载</h2>
+
+    <div>
+      <input type="text" id="pdfUrlInput" placeholder="Enter URL" />
+      <button id="generatePdfBtn">Generate PDF from URL</button>
+    </div>
+    <div>
+      <h2>从json数据生成</h2>
+
+      <div id="pdfContent" style="white-space: pre" spellcheck="false"></div>
+
+      <button id="generatePdfBtn1">1Generate Sample PDF</button>
+    </div>
+
+    <script>
+      document
+        .getElementById("generatePdfBtn")
+        .addEventListener("click", function () {
+          const pdfUrl = document.getElementById("pdfUrlInput").value;
+
+          fetch("/pdf-api/v1/print-page-pdf", {
+            method: "post",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ url: pdfUrl }),
+          })
+            .then((res) => res.blob())
+            .then((blob) => {
+              // 创建一个临时 URL
+              var url = window.URL.createObjectURL(blob);
+
+              // 创建一个链接并模拟点击以下载 PDF 文件
+              var a = document.createElement("a");
+              a.href = url;
+              a.download = "tables.pdf"; // 下载的文件名
+              document.body.appendChild(a);
+              a.click();
+
+              // 清理临时 URL
+              window.URL.revokeObjectURL(url);
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+        });
+    </script>
+    <script type="module">
+      import * as codemirror from "https://cdn.jsdelivr.net/npm/codemirror@6.0.1/+esm";
+      import {
+        jsonLanguage,
+        jsonParseLinter,
+      } from "https://cdn.jsdelivr.net/npm/@codemirror/lang-json@6.0.1/+esm";
+      import { linter } from "https://cdn.jsdelivr.net/npm/@codemirror/lint@6.4.2/+esm";
+      import serialize from "https://cdn.jsdelivr.net/npm/serialize-javascript@6.0.1/+esm";
+
+      let editor = new codemirror.EditorView({
+        extensions: [codemirror.basicSetup, jsonLanguage],
+        parent: pdfContent,
+
+        doc: ` {
+        "content": [
+            {"text": "pdf表格", "style": "header"},
+            "三地的Official documentation is in progress, this document is just a glimpse of what is possible with pdfmake and its layout engine.",
+            {"text": "A simple table (no headers, no width specified, no spans, no styling)", "style": "subheader"},
+            "The following table has nothing more than a body array",
+            {
+                "layout": "lightHorizontalLines",
+                "noBorders": true,
+                "table": {
+                    "headerRows": 2,
+                    "widths": ["*", "auto", 100, "*"],
+                    "body": [
+                        ["First", "Second", "Third", "The last one"],
+                        ["Value 1", "", "Value 3", "Value 4"],
+                        [{"text": "Bold value", "bold": true}, "Val 2", "Val 3", "Val 4"],
+                        [{"text": "Bold value", "bold": true}, "Val 2", "Val 3", "Val 4"],
+                        [{"text": "Bold value", "bold": true}, "Val 2", "Val 3", "Val 4"],
+                        [{"text": "Bold value", "bold": true}, "Val 2", "Val 3", "Val 4"]
+                    ]
+                }
+            }
+        ],
+        "styles": {
+            "header": {"fontSize": 18, "bold": true, "margin": [0, 0, 0, 10]},
+            "subheader": {"fontSize": 16, "bold": true, "margin": [0, 10, 0, 5]}
+        },
+        "defaultStyle": {}
+    }`,
+      });
+      const contentObj = JSON.parse(editor.state.doc.toString());
+      contentObj.content.push({
+        style: "tableExample",
+        table: {
+          body: [
+            ["Sample value 1", "Sample value 2", "Sample value 3"],
+            ["Sample value 1", "Sample value 2", "Sample value 3"],
+            ["Sample value 1", "Sample value 2", "Sample value 3"],
+            ["Sample value 1", "Sample value 2", "Sample value 3"],
+            ["Sample value 1", "Sample value 2", "Sample value 3"],
+          ],
+        },
+        layout: {
+          fillColor: function (rowIndex, node, columnIndex) {
+            return rowIndex % 2 === 0 ? "#CCCCCC" : null;
+          },
+        },
+      });
+
+      document
+        .getElementById("generatePdfBtn1")
+        .addEventListener("click", function () {
+          console.log(1);
+          const pdfContent = document.getElementById("pdfContent").innerHTML; // Get JSON content from textarea
+          console.log(pdfContent);
+          fetch("/pdf-api/v1/generate-pdf", {
+            method: "post",
+            headers: {
+              "Content-Type": "application/json", // 声明发送的数据类型为 JSON
+            },
+            body: serialize(contentObj),
+          }) // 这里的路径应与你的 Express 路由相匹配
+            .then((response) => response.blob()) // 将响应转换为 Blob
+            .then((blob) => {
+              // 创建一个临时 URL
+              var url = window.URL.createObjectURL(blob);
+
+              // 创建一个链接并模拟点击以下载 PDF 文件
+              var a = document.createElement("a");
+              a.href = url;
+              a.download = "tables.pdf"; // 下载的文件名
+              document.body.appendChild(a);
+              a.click();
+
+              // 清理临时 URL
+              window.URL.revokeObjectURL(url);
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+        });
+    </script>
+  </body>
+</html>

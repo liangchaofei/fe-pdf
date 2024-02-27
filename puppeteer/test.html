@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Generate PDF</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f4f4f4;
+      }
+
+      h1 {
+        color: #333;
+      }
+
+      div {
+        margin-bottom: 20px;
+      }
+
+      input {
+        padding: 10px;
+        font-size: 16px;
+      }
+
+      button {
+        padding: 10px;
+        font-size: 16px;
+        cursor: pointer;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+      }
+
+      button:hover {
+        background-color: #45a049;
+      }
+
+      textarea {
+        padding: 10px;
+        font-size: 16px;
+      }
+
+      #pdfContent {
+        width: 100%;
+        min-height: 200px;
+        border: 1px solid #ccc;
+        padding: 10px;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        outline: none;
+        overflow-y: auto;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+      }
+
+      #pdfContent:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+      }
+    </style>
+    <script type="module"></script>
+  </head>
+
+  <body>
+    <h1>Generate PDF</h1>
+    <h2>从URL下载</h2>
+
+    <div>
+      <input type="text" id="pdfUrlInput" placeholder="Enter URL" />
+      <button id="generatePdfBtn">Generate PDF from URL</button>
+    </div>
+
+    <script>
+      document
+        .getElementById("generatePdfBtn")
+        .addEventListener("click", function () {
+          const pdfUrl = document.getElementById("pdfUrlInput").value;
+
+          fetch("/pdf-api/v1/print-page-pdf", {
+            method: "post",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ url: pdfUrl }),
+          })
+            .then((res) => res.blob())
+            .then((blob) => {
+              // 创建一个临时 URL
+              var url = window.URL.createObjectURL(blob);
+
+              // 创建一个链接并模拟点击以下载 PDF 文件
+              var a = document.createElement("a");
+              a.href = url;
+              a.download = "tables.pdf"; // 下载的文件名
+              document.body.appendChild(a);
+              a.click();
+
+              // 清理临时 URL
+              window.URL.revokeObjectURL(url);
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+        });
+    </script>
+  </body>
+</html>
